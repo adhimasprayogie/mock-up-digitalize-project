@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultima Business Suite - Modular</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hidden-row { display: none !important; }
+        .tab-pane { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #0284c7; cursor: pointer; margin-top: -6px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]:disabled::-webkit-slider-thumb { background: #64748b; cursor: not-allowed; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #e2e8f0; border-radius: 2px; }
+        input[type=range]:disabled::-webkit-slider-runnable-track { background: #334155; cursor: not-allowed; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: { navy: '#1e3a8a', blue: '#0284c7', orange: '#f97316', green: '#10b981', red: '#ef4444' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col h-full shrink-0 z-20 shadow-xl relative">
+        <div class="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800 shrink-0">
+            <div class="w-8 h-8 bg-brand-blue text-white rounded flex items-center justify-center mr-3 shadow-md"><i class="fa-solid fa-layer-group"></i></div>
+            <span class="text-white font-bold text-lg tracking-wide">Ultima Suite</span>
+        </div>
+        <div class="px-6 py-5 border-b border-slate-800 flex items-center gap-3">
+            <img src="https://ui-avatars.com/api/?name=Adhimas+Prayogie&background=0284c7&color=fff" alt="User" class="w-10 h-10 rounded-full border-2 border-slate-700">
+            <div>
+                <p class="text-sm font-bold text-white">Adhimas Prayogie</p>
+                <p id="sidebar-role-text" class="text-[10px] text-slate-400 font-medium tracking-wider uppercase">GM Sales</p>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4">
+            <p class="px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Dashboards</p>
+            <nav class="space-y-1">
+                <button onclick="switchTab('tab-sales', this)" class="nav-item w-full flex items-center px-6 py-3 text-sm font-medium transition-all bg-slate-800 text-white border-l-4 border-brand-blue"><i class="fa-solid fa-chart-line w-6 text-left"></i> Sales Performance</button>
+                <button onclick="switchTab('tab-forecast', this)" class="nav-item w-full flex items-center px-6 py-3 text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800 border-l-4 border-transparent"><i class="fa-solid fa-brain w-6 text-left"></i> Demand Forecast</button>
+                <button onclick="switchTab('tab-phs', this)" class="nav-item w-full flex items-center px-6 py-3 text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800 border-l-4 border-transparent"><i class="fa-solid fa-file-invoice-dollar w-6 text-left"></i> PHS Pricing Engine</button>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-full relative overflow-hidden">
+        
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 z-10 shrink-0 border-b border-slate-200">
+            <div class="flex items-center w-96 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 focus-within:border-brand-blue transition-all">
+                <i class="fa-solid fa-search text-slate-400"></i>
+                <input type="text" placeholder="Global Search (PO, Customer, SKU)..." class="bg-transparent border-none outline-none text-sm ml-2 w-full text-slate-700">
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center bg-amber-100 border border-amber-300 rounded-lg px-3 py-1.5 shadow-sm">
+                    <i class="fa-solid fa-user-shield text-amber-700 mr-2 text-sm"></i>
+                    <span class="text-[10px] font-bold text-amber-800 mr-2 uppercase tracking-wider">Simulate Role:</span>
+                    <select id="roleSwitcher" onchange="changeRole()" class="bg-transparent text-sm font-black text-amber-900 focus:outline-none cursor-pointer">
+                        <option value="MGT">DSM / GM (Tim Pricing)</option>
+                        <option value="DSR">DSR (Sales Rep)</option>
+                    </select>
+                </div>
+                <div class="h-8 w-px bg-slate-200 mx-2"></div>
+                <button class="relative text-slate-400 hover:text-brand-blue"><i class="fa-regular fa-bell text-xl"></i><span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white font-bold flex items-center justify-center border-2 border-white">3</span></button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto bg-slate-50 relative pb-10">
+
+            <!-- TAB 1: SALES PERFORMANCE -->
+            <div id="tab-sales" class="tab-pane block p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 md:px-6 md:py-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center border-l-4 border-brand-blue"><i class="fa-solid fa-chart-column text-brand-blue"></i></div>
+                        <div><h1 class="text-xl md:text-2xl font-bold text-brand-navy leading-tight">Team Achievement</h1><p class="text-xs text-slate-500 font-medium">Overview Summary</p></div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <div class="flex items-center bg-blue-50 border border-blue-200 rounded-lg p-1">
+                            <i class="fa-solid fa-building text-brand-blue ml-2 text-sm"></i>
+                            <select id="bpFilterSales" onchange="filterSalesDashboard()" class="bg-transparent text-sm font-bold text-blue-800 px-2 py-1.5 focus:outline-none cursor-pointer">
+                                <option value="ALL">ALL BP (Nasional)</option><option value="CPA 01">CPA 01</option><option value="CPA 02">CPA 02</option><option value="CPA 03">CPA 03</option><option value="CPA 04">CPA 04</option>
+                            </select>
+                        </div>
+                        <div class="flex bg-slate-50 border border-slate-200 rounded-lg p-1"><select class="bg-transparent text-sm font-medium text-slate-600 px-2 py-1.5 focus:outline-none cursor-pointer"><option>Juni</option></select></div>
+                        <div class="flex bg-slate-50 border border-slate-200 rounded-lg p-1"><select class="bg-transparent text-sm font-medium text-slate-600 px-2 py-1.5 focus:outline-none cursor-pointer"><option>2026</option></select></div>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-slate-400">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">TOTAL PO</p><h2 id="kpi-po" class="text-3xl font-black text-slate-800 mb-1">454.760 L</h2><p class="text-xs text-slate-500">Order Masuk Bulan Ini</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-brand-blue">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">OS DELIVERY</p><h2 id="kpi-deliv" class="text-3xl font-black text-brand-blue mb-1">160.617 L</h2><p class="text-xs text-slate-500">Barang Belum Dikirim</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-brand-orange">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">OS INVOICE</p><h2 id="kpi-inv" class="text-3xl font-black text-brand-orange mb-1">169.417 L</h2><p class="text-xs text-slate-500">DO Selesai, Belum Invoice</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm border-t-4 border-t-brand-green">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">TOTAL DELIVERED</p><h2 id="kpi-done" class="text-3xl font-black text-brand-green mb-1">68.531 L</h2><p class="text-xs text-slate-500">Telah Terinvoice</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center border-l-4 border-l-brand-blue">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-industry text-slate-400"></i><p class="text-sm font-bold text-brand-navy uppercase">SMELTER SEGMENT</p></div>
+                            <h2 id="kpi-smelter-pct" class="text-4xl font-black text-brand-navy mb-2">36.7%</h2><p class="text-xs font-bold text-brand-red">Growth: ▼ -46.8%</p>
+                        </div>
+                        <div class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">ACTUAL VS TARGET</p><p id="kpi-smelter-val" class="text-base font-bold text-brand-navy">122.265 / 333.000 L</p></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center border-l-4 border-l-brand-red">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-truck-fast text-slate-400"></i><p class="text-sm font-bold text-brand-red uppercase">NON-SMELTER SEGMENT</p></div>
+                            <h2 id="kpi-ns-pct" class="text-4xl font-black text-brand-red mb-2">36.7%</h2><p class="text-xs font-bold text-brand-red">Growth: ▼ -64.0%</p>
+                        </div>
+                        <div class="text-right"><p class="text-[10px] font-bold text-slate-400 uppercase mb-1">ACTUAL VS TARGET</p><p id="kpi-ns-val" class="text-base font-bold text-brand-navy">115.683 / 315.000 L</p></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col w-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-brand-navy text-lg flex items-center gap-2"><i class="fa-solid fa-route text-brand-blue"></i> Operational Order Pipeline</h3>
+                        <div id="alertBadge" class="bg-red-50 text-red-600 text-xs font-bold px-3 py-1.5 rounded flex items-center gap-2 border border-red-100">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>
+                            <span id="alertText">Live Bottleneck Alert</span>
+                        </div>
+                    </div>
+                    <div class="relative w-96 mb-10">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
+                        <input type="text" id="orderSearch" oninput="trackOrder()" placeholder="Cari PO (Contoh: 12.174, POHF)..." class="w-full border border-slate-300 rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-brand-blue bg-slate-50 shadow-inner">
+                    </div>
+                    <div class="relative w-full px-12 mb-4">
+                        <div class="absolute top-[20px] left-[10%] right-[10%] flex items-center h-1 z-0">
+                            <div id="line-1" class="w-1/4 bg-emerald-300 transition-colors duration-300"></div><div id="line-2" class="w-1/4 bg-red-300 transition-colors duration-300"></div>
+                            <div id="line-3" class="w-1/4 bg-slate-200 transition-colors duration-300"></div><div id="line-4" class="w-1/4 bg-slate-200 transition-colors duration-300"></div>
+                        </div>
+                        <div class="flex justify-between relative z-10 w-full text-center">
+                            <div class="flex flex-col items-center flex-1"><div id="node-1" class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-500 border border-emerald-200 flex items-center justify-center shadow-sm"><i class="fa-solid fa-check"></i></div><p class="text-xs font-bold text-slate-700 mt-3">Order Received</p></div>
+                            <div class="flex flex-col items-center flex-1"><div id="node-2" class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-500 border border-emerald-200 flex items-center justify-center shadow-sm"><i class="fa-solid fa-check"></i></div><p class="text-xs font-bold text-slate-700 mt-3">Stock Allocated</p></div>
+                            <div class="flex flex-col items-center flex-1 relative">
+                                <div id="node-3" class="w-12 h-12 -mt-1 rounded-full bg-red-50 text-red-600 border-2 border-red-400 flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.5)] bg-white relative z-20 animate-pulse transition-all"><i class="fa-solid fa-truck-ramp-box text-lg"></i></div>
+                                <div class="mt-2 w-max text-center"><p class="text-xs font-bold text-slate-800" id="text-node-3">OS Delivery (Gudang)</p><p class="text-[10px] text-red-500 font-bold mt-0.5" id="subtext-node-3">5 Order > 3 Hari</p></div>
+                            </div>
+                            <div class="flex flex-col items-center flex-1">
+                                <div id="node-4" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center shadow-sm transition-all"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                                <p class="text-xs font-bold text-slate-700 mt-3">OS Invoice</p><p class="text-[10px] text-orange-500 font-bold mt-0.5 hidden" id="subtext-node-4">Pending Action</p>
+                            </div>
+                            <div class="flex flex-col items-center flex-1"><div id="node-5" class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center shadow-sm"><i class="fa-regular fa-circle-check"></i></div><p class="text-xs font-bold text-slate-500 mt-3">Completed</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100"><h3 class="font-bold text-brand-navy"><i class="fa-solid fa-users text-brand-blue mr-2"></i> DSR Target Achievement</h3></div>
+                    <div class="overflow-x-auto p-4">
+                        <table class="w-full text-left whitespace-nowrap min-w-[900px]">
+                            <thead><tr class="text-xs uppercase text-slate-500 font-bold border-b border-slate-100"><th class="px-4 py-3 pb-4">SALESMAN</th><th class="px-4 py-3 pb-4">BP / SEGMEN</th><th class="px-4 py-3 pb-4 w-64">ALL VOLUME</th><th class="px-4 py-3 pb-4 w-64">PREMIUM</th></tr></thead>
+                            <tbody class="text-sm font-semibold divide-y divide-slate-50">
+                                <tr class="hover:bg-slate-50/50 sales-row" data-bp="CPA 01">
+                                    <td class="px-4 py-4 text-slate-800">Desmanto Rio Arbie</td><td class="px-4 py-4"><span class="text-[10px] font-bold text-brand-blue mr-1 bg-blue-50 px-2 py-1 rounded border border-blue-100">CPA 01</span><span class="bg-slate-100 text-slate-500 text-[10px] px-2 py-1 rounded-md uppercase border border-slate-200">Non Smelter</span></td>
+                                    <td class="px-4 py-4 align-middle"><div class="flex justify-between text-xs mb-1.5"><span class="text-brand-blue font-bold">48.4%</span><span class="text-slate-400 font-medium text-[10px]">10.012 / 20.700</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-brand-blue h-1.5 rounded-full" style="width: 48.4%"></div></div></td>
+                                    <td class="px-4 py-4 align-middle"><div class="flex justify-between text-xs mb-1.5"><span class="text-emerald-500 font-bold">189.8%</span><span class="text-slate-400 font-medium text-[10px]">1.025 / 540</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full" style="width: 100%"></div></div></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50 sales-row" data-bp="CPA 04">
+                                    <td class="px-4 py-4 text-slate-800">David Prang</td><td class="px-4 py-4"><span class="text-[10px] font-bold text-brand-blue mr-1 bg-blue-50 px-2 py-1 rounded border border-blue-100">CPA 04</span><span class="bg-slate-800 text-white text-[10px] px-2 py-1 rounded-md uppercase shadow-sm">Smelter</span></td>
+                                    <td class="px-4 py-4 align-middle"><div class="flex justify-between text-xs mb-1.5"><span class="text-brand-blue font-bold">65.0%</span><span class="text-slate-400 font-medium text-[10px]">58.520 / 90.000</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-brand-blue h-1.5 rounded-full" style="width: 65.0%"></div></div></td>
+                                    <td class="px-4 py-4 align-middle"><div class="flex justify-between text-xs mb-1.5"><span class="text-slate-800 font-bold">0.0%</span><span class="text-slate-400 font-medium text-[10px]">- / 22.500</span></div><div class="w-full bg-slate-100 rounded-full h-1.5"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden border-t-4 border-t-brand-orange">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-orange-50/30 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-brand-orange"></i><h3 class="font-bold text-slate-800">Action Required: Outstanding Orders</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap">
+                            <thead class="bg-white border-b border-slate-200 text-[11px] uppercase text-slate-500 font-bold">
+                                <tr><th class="px-4 py-3">BP</th><th class="px-6 py-3">CUSTOMER</th><th class="px-6 py-3">DSR</th><th class="px-6 py-3">NO PO / SO</th><th class="px-6 py-3 text-right">VOL. (L)</th><th class="px-6 py-3 text-center">STATUS ORDER</th></tr>
+                            </thead>
+                            <tbody class="text-sm font-medium text-slate-600 divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50 sales-row" data-bp="CPA 03">
+                                    <td class="px-4 py-4 text-xs font-bold text-brand-blue">CPA 03</td><td class="px-6 py-4 font-bold text-brand-navy">PT PLN NPS site Ternate</td><td class="px-6 py-4 text-xs">Brigita Maria</td><td class="px-6 py-4 text-xs text-slate-500">PO: 12.174</td><td class="px-6 py-4 text-right font-bold text-brand-navy">25.080</td><td class="px-6 py-4 text-center"><span class="bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">OS INVOICE</span></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 sales-row" data-bp="CPA 04">
+                                    <td class="px-4 py-4 text-xs font-bold text-brand-blue">CPA 04</td><td class="px-6 py-4 font-bold text-brand-navy">PT Halmahera Jaya</td><td class="px-6 py-4 text-xs">David Prang</td><td class="px-6 py-4 text-xs text-slate-500">POHF2026</td><td class="px-6 py-4 text-right font-bold text-brand-navy">31.350</td><td class="px-6 py-4 text-center"><span class="bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">OS DELIVERY</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: DEMAND FORECAST -->
+            <div id="tab-forecast" class="tab-pane hidden p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 md:px-6 md:py-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center border-l-4 border-brand-blue text-white"><i class="fa-solid fa-brain"></i></div>
+                        <div><h1 class="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Demand Forecast Portal</h1><p class="text-xs text-slate-500 font-medium">Matrix & Approval System</p></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <select class="text-sm border border-slate-300 rounded px-3 py-2 bg-slate-50"><option>Oktober 2026</option></select>
+                        <select id="bpFilterForecast" onchange="filterForecast()" class="text-sm border border-slate-300 rounded px-3 py-2 bg-slate-50 font-bold text-brand-navy">
+                            <option value="ALL">ALL BP</option><option value="CPA 01">CPA 01</option><option value="CPA 02">CPA 02</option>
+                        </select>
+                        <select id="dsrFilterForecast" onchange="filterForecast()" class="text-sm border border-slate-300 rounded px-3 py-2 bg-slate-50">
+                            <option value="ALL">Semua DSR</option><option value="Desmanto Rio">Desmanto Rio</option><option value="David Prang">David Prang</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div><p class="text-sm font-medium text-slate-500 mb-1">Total Volume Submit (BP)</p><h2 id="kpi-fc-bp" class="text-3xl font-bold text-slate-800">1.250.000 <span class="text-sm text-slate-500">L</span></h2></div>
+                        <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div><p class="text-sm font-medium text-slate-500 mb-1">Total Volume Submit (DSR)</p><h2 id="kpi-fc-dsr" class="text-3xl font-bold text-brand-blue">250.000 <span class="text-sm text-slate-500">L</span></h2></div>
+                        <div class="w-12 h-12 bg-blue-50 text-brand-blue rounded-full flex items-center justify-center text-xl"><i class="fa-solid fa-user-tie"></i></div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                        <h3 class="font-bold text-slate-800"><i class="fa-solid fa-table-list text-brand-blue mr-2"></i> Forecast Input Matrix</h3>
+                        <button id="btnTambahForecast" onclick="addCustomForecast()" class="hidden bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded shadow-sm transition-colors">
+                            <i class="fa-solid fa-plus mr-1"></i> Tambah Forecast Manual
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left whitespace-nowrap min-w-[1100px]">
+                            <thead class="bg-white border-b border-slate-200 text-xs uppercase text-slate-500 font-bold">
+                                <tr>
+                                    <th class="px-3 py-3 w-10"><input type="checkbox" id="checkAllForecast" onchange="toggleAllForecast(this)"></th>
+                                    <th class="px-3 py-3">BP & CUSTOMER</th>
+                                    <th class="px-3 py-3">PRODUCT (SKU)</th>
+                                    <th class="px-3 py-3 text-right">HISTORIC (L)</th>
+                                    <th class="px-3 py-3 text-right bg-blue-50 text-blue-700 border-x border-blue-100 shadow-inner">SUGGESTION</th>
+                                    <th class="px-3 py-3 text-center">DSR PROPOSED (L)</th>
+                                    <th class="px-3 py-3 text-center bg-amber-50 text-amber-800 border-x border-amber-200">DSM ADJ. (L)</th>
+                                    <th class="px-3 py-3 w-48">JUSTIFICATION</th>
+                                    <th class="px-3 py-3 text-center">STATUS</th>
+                                    <th class="px-3 py-3 text-center w-12"><i class="fa-solid fa-gear"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="forecastTableBody" class="text-sm text-slate-700 divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50 fc-row transition-all duration-200" data-bp="CPA 01" data-dsr="Desmanto Rio" data-status="PENDING">
+                                    <td class="px-3 py-3"><input type="checkbox" class="fc-check rounded"></td>
+                                    <td class="px-3 py-3"><span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold mr-1">CPA 01</span>PT Kaltim Prima</td>
+                                    <td class="px-3 py-3 font-semibold">SH-TEL-46</td>
+                                    <td class="px-3 py-3 text-right font-medium text-slate-500">250.000</td>
+                                    <td class="px-3 py-3 text-right font-bold text-blue-700 bg-blue-50 border-x border-blue-100">265.000</td>
+                                    <td class="px-3 py-3 text-center"><input type="number" value="265000" class="input-dsr-prop w-24 border border-slate-300 rounded text-center py-1 font-semibold focus:border-brand-blue focus:outline-none transition-colors"></td>
+                                    <td class="px-3 py-3 text-center"><input type="number" placeholder="-" class="input-dsm-adj w-24 border border-amber-300 rounded text-center py-1 font-bold focus:border-amber-500 focus:outline-none transition-colors text-amber-700 bg-amber-50/50"></td>
+                                    <td class="px-3 py-3"><input type="text" placeholder="Sesuai Suggestion" class="input-justification w-full border border-slate-200 bg-slate-50 rounded px-2 py-1 text-xs focus:outline-none focus:border-brand-blue"></td>
+                                    <td class="px-3 py-3 text-center"><span class="status-badge bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold tracking-wider border border-amber-200 shadow-sm">PENDING</span></td>
+                                    <td class="px-3 py-3 text-center"><button onclick="deleteForecastRow(this)" class="btn-delete text-slate-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 fc-row transition-all duration-200" data-bp="CPA 01" data-dsr="David Prang" data-status="PENDING">
+                                    <td class="px-3 py-3"><input type="checkbox" class="fc-check rounded"></td>
+                                    <td class="px-3 py-3"><span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold mr-1">CPA 01</span>PT Pama Persada</td>
+                                    <td class="px-3 py-3 font-semibold">SH-RIM-15W40</td>
+                                    <td class="px-3 py-3 text-right font-medium text-slate-500">400.000</td>
+                                    <td class="px-3 py-3 text-right font-bold text-blue-700 bg-blue-50 border-x border-blue-100">420.000</td>
+                                    <td class="px-3 py-3 text-center"><input type="number" value="500000" class="input-dsr-prop w-24 border-2 border-brand-blue bg-blue-50 text-brand-blue rounded text-center py-1 font-bold focus:outline-none"></td>
+                                    <td class="px-3 py-3 text-center"><input type="number" placeholder="-" class="input-dsm-adj w-24 border border-amber-300 rounded text-center py-1 font-bold focus:border-amber-500 focus:outline-none transition-colors text-amber-700 bg-amber-50/50"></td>
+                                    <td class="px-3 py-3"><input type="text" value="Ada penambahan fleet" class="input-justification w-full border border-blue-300 bg-white rounded px-2 py-1 text-xs focus:outline-none"></td>
+                                    <td class="px-3 py-3 text-center"><span class="status-badge bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[10px] font-bold tracking-wider border border-amber-200 shadow-sm">PENDING</span></td>
+                                    <td class="px-3 py-3 text-center"><button onclick="deleteForecastRow(this)" class="btn-delete text-slate-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 fc-row transition-all duration-200" data-bp="CPA 02" data-dsr="Desmanto Rio" data-status="APPROVED">
+                                    <td class="px-3 py-3"><input type="checkbox" class="fc-check rounded"></td>
+                                    <td class="px-3 py-3"><span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-bold mr-1">CPA 02</span>CV Maju Jaya</td>
+                                    <td class="px-3 py-3 font-semibold">SH-OMA-220</td>
+                                    <td class="px-3 py-3 text-right font-medium text-slate-500">120.000</td>
+                                    <td class="px-3 py-3 text-right font-bold text-blue-700 bg-blue-50 border-x border-blue-100">110.000</td>
+                                    <td class="px-3 py-3 text-center"><input type="number" value="110000" class="input-dsr-prop w-24 border border-slate-300 rounded text-center py-1 font-semibold focus:outline-none"></td>
+                                    <td class="px-3 py-3 text-center"><input type="number" value="110000" class="input-dsm-adj w-24 border border-amber-300 rounded text-center py-1 font-bold focus:border-amber-500 focus:outline-none transition-colors text-amber-700 bg-amber-50/50"></td>
+                                    <td class="px-3 py-3"><input type="text" placeholder="Sesuai Suggestion" class="input-justification w-full border border-slate-200 bg-slate-50 rounded px-2 py-1 text-xs focus:outline-none"></td>
+                                    <td class="px-3 py-3 text-center"><span class="status-badge bg-green-100 text-green-700 border border-green-200 px-2 py-1 rounded-full text-[10px] font-bold tracking-wider shadow-sm">APPROVED</span></td>
+                                    <td class="px-3 py-3 text-center"><button onclick="deleteForecastRow(this)" class="btn-delete text-slate-400 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <div id="dsmValidationPanel" class="w-full md:w-[450px] bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 flex flex-col justify-center relative overflow-hidden transition-all duration-300">
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-slate-700 rounded-full opacity-50"></div>
+                        <div class="text-center mb-6 text-white relative z-10">
+                            <i class="fa-solid fa-clipboard-check text-4xl mb-3 text-brand-blue"></i>
+                            <h3 class="font-bold text-lg">DSM Validation Action</h3>
+                            <p class="text-slate-400 text-sm" id="selectedCountTextForecast">0 items selected</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 relative z-10">
+                            <button onclick="approveForecast()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center gap-2"><i class="fa-solid fa-check-double"></i> Setujui</button>
+                            <button onclick="rejectForecast()" class="bg-transparent border border-slate-500 hover:bg-brand-red hover:border-brand-red hover:text-white text-slate-300 font-bold py-3 rounded-lg shadow-md transition-all flex justify-center items-center gap-2"><i class="fa-solid fa-rotate-left"></i> Revisi / Reject</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500 text-center mt-3 relative z-10">*Isi kolom <b>DSM ADJ</b> jika ingin memberikan angka final sebelum merevisi.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: PHS MARGIN ENGINE -->
+            <div id="tab-phs" class="tab-pane hidden p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
+                <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 md:px-6 md:py-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded bg-slate-900 flex items-center justify-center border-l-4 border-brand-blue text-white"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div><h1 class="text-xl md:text-2xl font-bold text-slate-900 leading-tight">PHS Pricing Engine</h1><p class="text-xs text-slate-500 font-medium">Margin Simulator & Fast-Track Approval</p></div>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <select id="bpFilterPhs" class="text-sm border border-slate-300 rounded px-3 py-2 bg-slate-50 font-bold text-brand-navy" onchange="filterPhs()">
+                            <option value="ALL">ALL BP</option><option value="CPA 01">CPA 01</option><option value="CPA 02">CPA 02</option><option value="CPA 03">CPA 03</option><option value="CPA 04">CPA 04</option>
+                        </select>
+                        <select id="dsrFilterPhs" class="text-sm border border-slate-300 rounded px-3 py-2 bg-slate-50" onchange="filterPhs()">
+                            <option value="ALL">Semua DSR</option><option value="Desmanto Rio">Desmanto Rio</option><option value="David Prang">David Prang</option><option value="Brigita Maria">Brigita Maria</option><option value="Peter Spykhner">Peter Spykhner</option>
+                        </select>
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input type="text" id="custFilterPhs" placeholder="Cari Customer..." class="text-sm border border-slate-300 rounded-lg pl-8 pr-3 py-2 bg-white focus:outline-none focus:border-brand-blue" oninput="filterPhs()">
+                        </div>
+                        <button id="btnTambahPhs" class="bg-brand-blue text-white text-sm font-bold px-4 py-2 rounded-lg hidden shadow-sm hover:bg-blue-600 transition-colors"><i class="fa-solid fa-plus mr-1"></i> Ajukan PHS</button>
+                    </div>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm"><p class="text-sm font-medium text-slate-500 mb-1">Total PHS (Bulan Ini)</p><h2 class="text-3xl font-black text-slate-800" id="kpi-phs-total">20</h2></div>
+                    <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100 shadow-sm"><p class="text-sm font-bold text-emerald-700 mb-1">Avg Lead Time</p><h2 class="text-3xl font-black text-emerald-600">45 Menit</h2></div>
+                    <div class="bg-amber-50 rounded-xl p-5 border border-amber-200 shadow-sm"><p class="text-sm font-bold text-amber-700 mb-1">Pending Approval</p><h2 class="text-3xl font-black text-amber-600" id="kpi-phs-pending">12</h2></div>
+                    <div class="bg-red-50 rounded-xl p-5 border border-red-200 shadow-sm"><p class="text-sm font-bold text-brand-red mb-1">PHS Rejected</p><h2 class="text-3xl font-black text-brand-red" id="kpi-phs-rejected">3</h2></div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div class="xl:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-[650px]">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-slate-800">Daftar Pengajuan PHS</h3></div>
+                        <div class="overflow-y-auto flex-1 p-0">
+                            <table class="w-full text-left whitespace-nowrap">
+                                <thead class="bg-white border-b border-slate-200 text-[10px] uppercase text-slate-500 font-bold sticky top-0 z-10 shadow-sm">
+                                    <tr><th class="px-4 py-3">ID PHS</th><th class="px-4 py-3">BP & DSR</th><th class="px-4 py-3">CUSTOMER</th><th class="px-4 py-3 text-right">SUPPORT (RP)</th><th class="px-4 py-3 text-center">MARGIN</th><th class="px-4 py-3 text-center">STATUS</th><th class="px-4 py-3 text-center w-24">AKSI</th></tr>
+                                </thead>
+                                <tbody id="phsTableBody" class="text-sm text-slate-700 divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="xl:col-span-1 bg-slate-900 rounded-xl shadow-lg border border-slate-700 flex flex-col h-[650px] text-white relative">
+                        <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                            <h3 class="font-bold flex items-center"><i class="fa-solid fa-calculator text-blue-400 mr-2"></i> Simulator PHS</h3>
+                            <span id="sim-phs-id" class="text-xs bg-slate-800 px-2 py-1 rounded border border-slate-600 font-mono text-slate-300">-</span>
+                        </div>
+                        <div class="p-6 flex-1 flex flex-col gap-6" id="simulatorContent">
+                            <div class="bg-slate-800 p-4 rounded border border-slate-700 grid grid-cols-2 gap-4 text-sm">
+                                <div><p class="text-slate-400 text-xs">Base COGS</p><p class="font-mono text-blue-300">Rp 68.680</p></div>
+                                <div><p class="text-slate-400 text-xs">Harga Std</p><p class="font-mono">Rp 85.000</p></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div><div class="flex justify-between items-end mb-2"><label class="text-sm font-semibold">Diskon (%)</label><span id="discountVal" class="text-lg font-mono font-bold text-blue-300">0.0%</span></div><input type="range" id="discountSlider" min="0" max="30" step="0.5" value="0" oninput="updateSimulator()" disabled></div>
+                                <div><div class="flex justify-between items-end mb-2"><label class="text-sm font-semibold">Volume (L)</label><span id="volumeVal" class="text-sm font-mono font-bold text-slate-300">1000</span></div><input type="range" id="volumeSlider" min="100" max="5000" step="100" value="1000" oninput="updateSimulator()" disabled></div>
+                            </div>
+                            <div class="mt-auto bg-slate-950 rounded-xl p-5 border border-slate-700 text-center relative overflow-hidden">
+                                <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-800"><span class="text-sm text-slate-400">Harga Support</span><span id="simPrice" class="text-xl font-mono font-bold">Rp 85.000</span></div>
+                                <p class="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-widest">Simulated Gross Margin</p>
+                                <div id="simMarginContainer" class="inline-block px-6 py-2 rounded-lg border transition-colors"><span id="simMargin" class="text-4xl font-black font-mono transition-colors">0.00%</span></div>
+                            </div>
+                            <button id="simActionBtn" class="w-full bg-slate-700 text-slate-400 font-bold py-3 rounded-lg transition-all text-sm cursor-not-allowed" disabled>Pilih PHS dari tabel</button>
+                        </div>
+                        <div id="simOverlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-20">
+                            <div class="text-center"><i class="fa-solid fa-hand-pointer text-4xl text-slate-500 mb-3"></i><p class="text-slate-400 font-medium">Pilih PHS dari tabel<br>untuk membuka Simulator</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- PANGGIL FILE JS EKSTERNAL DI SINI (URUTANNYA PENTING) -->
+    <script src="sales.js"></script>
+    <script src="forecast.js"></script>
+    <script src="phs.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
